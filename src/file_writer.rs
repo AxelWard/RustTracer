@@ -2,13 +2,10 @@ use std::fs::File;
 use std::io::{SeekFrom, Seek, Write};
 
 pub struct FileWriter {
-
   out_file: File
-
 }
 
 impl FileWriter {
-
   pub fn clear(&mut self) {
     if self.out_file.metadata().unwrap().len() as i64 > 0 {
       match self.out_file.set_len(0) {
@@ -59,11 +56,9 @@ impl FileWriter {
       Ok(_) => ()
     };
   }
-
 }
 
 pub fn open(path: &str) -> Option<FileWriter> {
-
   match File::open(path) {
     Ok(f) => return Some(FileWriter { out_file: f }),
     Err(_) => match File::create(path) {
@@ -71,5 +66,4 @@ pub fn open(path: &str) -> Option<FileWriter> {
       Err(_) => None
     }
   }
-
 }
