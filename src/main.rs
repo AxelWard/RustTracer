@@ -1,6 +1,9 @@
 use std::time::SystemTime;
+use camera::Camera;
+use math::ray::Ray;
+use math::{util, Point};
+use math::vec3::Vec3;
 use time::OffsetDateTime;
-use time::macros;
 
 use color::Color;
 use file_writer::FileWriter;
@@ -8,10 +11,11 @@ use file_writer::FileWriter;
 mod file_writer;
 mod color;
 mod math;
+mod camera;
 
 fn main() {
-  let width = 960;
-  let height = 540;
+  let width = 540;
+  let height = 340;
 
   let mut writer = init_image_file(width, height);
 
@@ -51,31 +55,48 @@ fn init_image_file(width: u16, height: u16) -> FileWriter {
 
 fn run(width: u16, height: u16) -> String {
   let size: u32 = width as u32 * height as u32;
-  let mut color_string = String::new();
+  let mut iter: u32 = 0;
+  let mut color_string: String = String::new();
+
+  let cam = Camera {
+    position: Vec3 { x: 0.0, y: 0.0, z: 0.0 },
+    width: width as u32,
+    height: height as u32,
+    focal_length: 1.0
+  };
+
+  println!("{}, {}", cam.viewport_width(), cam.viewport_height());
+  println!("{}, {}, {}", cam.lower_left_corner().x, cam.lower_left_corner().y, cam.lower_left_corner().z);
 
   for i in 0..height {
     for j in 0..width {
+      iter += 1;
 
-      let x = (j + 1) as f32;
-      let y = (i + 1) as f32;
-      let w = width as f32;
-      let h = height as f32;
+      let u: f32 = j as f32 / (width - 1) as f32;
+      let v: f32 = i as f32 / (height - 1) as f32;
 
-      let color = Color {
-        r: (x / w) * 254.999,
-        g: 255.0 - (y / h) * 254.999,
-        b: ((x / w) * 254.999 * 0.5) + ((y / h) * 254.999 * 0.5)
+      let ray: Ray = Ray {
+        origin: cam.position,
+        direction: cam.lower_left_corner() + (cam.horizontal() * u) + (cam.vertical() * v) - cam.position
       };
+
+      let color: Color = ray_color(&ray);
 
       color_string += &(color.to_string() + "\n");
 
-      let done = (i as f32 * w + x) as u32;
-      let percent = done as f32 / size as f32;
-      if done % ((width as u32 * height as u32) / 100)== 0 {
-        println!("{}% - {}/{}", (percent * 100.00).round(), done, size);
+      let percent = iter as f32 / size as f32;
+      if iter % (size / 100) == 0 {
+        println!("{}, {} - {}, {} - {}, {}, {}", j, i, u, v, ray.direction.x, ray.direction.y, ray.direction.z);
+        println!("{}% - {}/{}", (percent * 100.0).round(), iter, size);
       }
     }
   }
 
   return color_string;
+}
+
+fn ray_color(ray: &Ray) -> Color {
+  let unit_direction = ray.direction.unit();
+  let t: f32 = 0.5 * (unit_direction.y + 1.0);
+  return util::lerp(t, &Color { r: 255.0, g: 255.0, b: 255.0 }, &Color { r: 127.5, g: 190.0, b: 255.0 })
 }

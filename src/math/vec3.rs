@@ -105,3 +105,27 @@ impl ops::Add<Vec3> for Vec3 {
     };
   }
 }
+
+impl ops::Sub<f32> for Vec3 {
+  type Output = Vec3;
+
+  fn sub(self, rhs: f32) -> Self::Output {
+    return Vec3 {
+      x: self.x - rhs,
+      y: self.y - rhs,
+      z: self.z - rhs
+    };
+  }
+}
+
+impl ops::Sub<Vec3> for Vec3 {
+  type Output = Vec3;
+
+  fn sub(self, rhs: Vec3) -> Self::Output {
+    return Vec3 {
+      x: self.x - rhs.x,
+      y: self.y - rhs.y,
+      z: self.z - rhs.z
+    };
+  }
+}
