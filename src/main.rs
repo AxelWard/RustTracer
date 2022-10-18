@@ -1,8 +1,9 @@
 use std::time::SystemTime;
 use camera::Camera;
 use math::ray::Ray;
-use math::util;
+use math::{util, Point};
 use math::vec3::Vec3;
+use objects::Sphere;
 use time::OffsetDateTime;
 
 use color::Color;
@@ -12,6 +13,7 @@ mod file_writer;
 mod color;
 mod math;
 mod camera;
+mod objects;
 
 fn main() {
   let width = 540;
@@ -92,6 +94,19 @@ fn run(width: u16, height: u16) -> String {
 }
 
 fn ray_color(ray: &Ray) -> Color {
+  let sphere: Sphere = Sphere { 
+    center: Vec3 { x: 0.0, y: 0.0, z: -2.0 }, 
+    radius: 0.5
+  };
+
+  
+  let dist =  math::util::hit_sphere(&sphere, ray);
+
+  if dist > 0.0 {
+    let n = ((ray.at(dist) - sphere.center).unit() + 1.0) * 0.5;
+    return Color { r: n.x * 255.0, g: n.y * 255.0, b: n.z * 255.0 };
+  }
+
   let unit_direction = ray.direction.unit();
   let t: f32 = 0.5 * (unit_direction.y + 1.0);
   return util::lerp(t, &Color { r: 255.0, g: 255.0, b: 255.0 }, &Color { r: 53.0, g: 188.0, b: 243.0 })
