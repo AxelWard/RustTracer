@@ -9,12 +9,11 @@ pub struct Vec3 {
 
 impl Vec3 {
   pub fn length(&self) -> f32 {
-    return self.x * self.x + self.y * self.y + self.z * self.z;
+    return (self.length_squared()).sqrt();
   }
 
   pub fn length_squared(&self) -> f32 {
-    let len = self.length();
-    return len * len;
+    return (self.x * self.x) + (self.y * self.y) + (self.z * self.z);
   }
 
   pub fn unit(&self) -> Vec3 {
@@ -39,9 +38,9 @@ impl ops::Mul<f32> for Vec3 {
 
   fn mul(self, rhs: f32) -> Self::Output {
     return Vec3 {
-      z: self.x * rhs,
+      x: self.x * rhs,
       y: self.y * rhs,
-      x: self.z * rhs
+      z: self.z * rhs
     };
   }
 }
@@ -63,9 +62,9 @@ impl ops::Div<f32> for Vec3 {
 
   fn div(self, rhs: f32) -> Self::Output {
     return Vec3 {
-      z: self.x / rhs,
+      x: self.x / rhs,
       y: self.y / rhs,
-      x: self.z / rhs
+      z: self.z / rhs
     };
   }
 }

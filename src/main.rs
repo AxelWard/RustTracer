@@ -1,7 +1,7 @@
 use std::time::SystemTime;
 use camera::Camera;
 use math::ray::Ray;
-use math::{util, Point};
+use math::util;
 use math::vec3::Vec3;
 use time::OffsetDateTime;
 
@@ -39,7 +39,6 @@ fn init_image_file(width: u16, height: u16) -> FileWriter {
 
   match file_writer::open(&("./output_files/output_".to_owned() + &formatted + ".ppm")) {
       Some(w) => {
-        println!("Created file!");
         writer = w;
         writer.clear();
       },
@@ -64,11 +63,9 @@ fn run(width: u16, height: u16) -> String {
     height: height as u32,
     focal_length: 1.0
   };
+  let lower_left = cam.lower_left_corner();
 
-  println!("{}, {}", cam.viewport_width(), cam.viewport_height());
-  println!("{}, {}, {}", cam.lower_left_corner().x, cam.lower_left_corner().y, cam.lower_left_corner().z);
-
-  for i in 0..height {
+  for i in (0..height).rev() {
     for j in 0..width {
       iter += 1;
 
@@ -77,7 +74,7 @@ fn run(width: u16, height: u16) -> String {
 
       let ray: Ray = Ray {
         origin: cam.position,
-        direction: cam.lower_left_corner() + (cam.horizontal() * u) + (cam.vertical() * v) - cam.position
+        direction: lower_left + (cam.horizontal() * u) + (cam.vertical() * v) - cam.position
       };
 
       let color: Color = ray_color(&ray);
@@ -86,7 +83,6 @@ fn run(width: u16, height: u16) -> String {
 
       let percent = iter as f32 / size as f32;
       if iter % (size / 100) == 0 {
-        println!("{}, {} - {}, {} - {}, {}, {}", j, i, u, v, ray.direction.x, ray.direction.y, ray.direction.z);
         println!("{}% - {}/{}", (percent * 100.0).round(), iter, size);
       }
     }
@@ -98,5 +94,5 @@ fn run(width: u16, height: u16) -> String {
 fn ray_color(ray: &Ray) -> Color {
   let unit_direction = ray.direction.unit();
   let t: f32 = 0.5 * (unit_direction.y + 1.0);
-  return util::lerp(t, &Color { r: 255.0, g: 255.0, b: 255.0 }, &Color { r: 127.5, g: 190.0, b: 255.0 })
+  return util::lerp(t, &Color { r: 255.0, g: 255.0, b: 255.0 }, &Color { r: 53.0, g: 188.0, b: 243.0 })
 }

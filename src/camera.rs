@@ -28,7 +28,6 @@ impl Camera {
     return Vec3 { x: 0.0, y: self.viewport_height(), z: 0.0 };
   }
 
-  // SOMETHING HERE IS BROKEN???
   pub fn lower_left_corner(&self) -> Vec3 {
     return self.position - (self.horizontal() / 2.0) - (self.vertical() / 2.0) - Vec3 { x: 0.0, y: 0.0, z: self.focal_length };
   }
