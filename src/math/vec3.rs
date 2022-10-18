@@ -128,3 +128,15 @@ impl ops::Sub<Vec3> for Vec3 {
     };
   }
 }
+
+impl ops::Neg for Vec3 {
+  type Output = Vec3;
+
+  fn neg(self) -> Self::Output {
+    return Vec3 {
+      x: -self.x,
+      y: -self.y,
+      z: -self.z
+    };
+  }
+}
