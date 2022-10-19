@@ -1,4 +1,4 @@
-use crate::math::vec3::Vec3;
+use crate::math::{vec3::Vec3, ray::Ray};
 
 pub struct Camera {
   pub position: Vec3,
@@ -30,5 +30,12 @@ impl Camera {
 
   pub fn lower_left_corner(&self) -> Vec3 {
     return self.position - (self.horizontal() / 2.0) - (self.vertical() / 2.0) - Vec3 { x: 0.0, y: 0.0, z: self.focal_length };
+  }
+
+  pub fn get_ray(&self, u: f32, v: f32) -> Ray {
+    return Ray {
+      origin: self.position,
+      direction: self.lower_left_corner() + (self.horizontal() * u) + (self.vertical() * v) - self.position
+    };
   }
 }

@@ -64,3 +64,19 @@ impl ops::Add<Color> for Color {
     };
   }
 }
+
+impl ops::AddAssign for Color {
+  fn add_assign(&mut self, rhs: Color) {
+    self.r += rhs.r;
+    self.g += rhs.g;
+    self.b += rhs.b;
+  }
+}
+
+impl ops::DivAssign<f32> for Color {
+  fn div_assign(&mut self, rhs: f32) {
+    self.r /= rhs;
+    self.g /= rhs;
+    self.b /= rhs;
+  }
+}
