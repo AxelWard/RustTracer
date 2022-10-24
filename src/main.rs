@@ -1,3 +1,4 @@
+use std::sync::mpsc::{self, Sender, Receiver};
 use std::time::SystemTime;
 use camera::Camera;
 use hittable::{Hittable, HittableList};
@@ -17,9 +18,8 @@ mod math;
 mod camera;
 mod hittable;
 
-const SAMPLES_PER_PIXEL: i32 = 25;
+const SAMPLES_PER_PIXEL: i32 = 50;
 const MAX_BOUNCES: u32 = 25;
-const GAMMA_SCALE: f32 = 2.0;
 
 fn main() {
   let width = 540;
@@ -28,10 +28,15 @@ fn main() {
   let mut writer = init_image_file(width, height);
 
   let start = SystemTime::now();
-  let output = run(width, height);
+  let color_data = run(width, height);
   let duration = SystemTime::now().duration_since(start).unwrap().as_millis();
 
   println!("Run took {}s, outputting image.", duration as f32 / 1000.0);
+
+  let mut output: String = String::new();
+  for col in color_data {
+    output += &format!("{} ", (col * 255.0).to_string());
+  }
 
   writer.write(&output);
 
@@ -60,10 +65,9 @@ fn init_image_file(width: u16, height: u16) -> FileWriter {
   return writer;
 }
 
-fn run(width: u16, height: u16) -> String {
+fn run(width: u16, height: u16) -> Vec<Color> {
   let size: u32 = width as u32 * height as u32;
   let mut iter: u32 = 0;
-  let mut color_string: String = String::new();
 
   let cam = Camera {
     position: Vec3 { x: 0.0, y: 0.0, z: 0.0 },
@@ -82,26 +86,13 @@ fn run(width: u16, height: u16) -> String {
     radius: 100.0,
   }));
 
+  let mut output: Vec<Color> = Vec::with_capacity(width as usize * height as usize);
+
   for i in (0..height).rev() {
     for j in 0..width {
       iter += 1;
 
-      let mut color = Color { r: 0.0, g: 0.0, b: 0.0 };
-
-      for _ in 0..SAMPLES_PER_PIXEL {
-          let u: f32 = (j as f32 + util::random_float()) / (width - 1) as f32;
-          let v: f32 = (i as f32 + util::random_float()) / (height - 1) as f32;
-    
-          color += ray_color(&cam.get_ray(u, v), &world, MAX_BOUNCES);
-      }
-      
-      let avg_color: Color = Color { 
-        r: util::clamp(&(color.r / SAMPLES_PER_PIXEL as f32), 0.0, 1.0).sqrt(),
-        g: util::clamp(&(color.g / SAMPLES_PER_PIXEL as f32), 0.0, 1.0).sqrt(),
-        b: util::clamp(&(color.b / SAMPLES_PER_PIXEL as f32), 0.0, 1.0).sqrt()
-      };
-
-      color_string += &((avg_color * 255.0).to_string() + "\n");
+      output.push(process_pixel(&world, &cam, &j, &i));
 
       let percent = iter as f32 / size as f32;
       if iter % (size / 100) == 0 {
@@ -110,7 +101,31 @@ fn run(width: u16, height: u16) -> String {
     }
   }
 
-  return color_string;
+  return output;
+}
+
+fn process_pixel(world: &HittableList, cam: &Camera, x: &u16, y: &u16) -> Color {
+  let mut color = Color { r: 0.0, g: 0.0, b: 0.0 };
+
+  for _ in 0..SAMPLES_PER_PIXEL {
+    let u: f32 = (*x as f32 + util::random_float()) / (cam.width - 1) as f32;
+    let v: f32 = (*y as f32 + util::random_float()) / (cam.height - 1) as f32;
+
+    color += ray_color(&cam.get_ray(u, v), &world, MAX_BOUNCES);
+  }
+  
+  let avg_color: Color = Color { 
+    r: util::clamp(&(color.r / SAMPLES_PER_PIXEL as f32), 0.0, 1.0),
+    g: util::clamp(&(color.g / SAMPLES_PER_PIXEL as f32), 0.0, 1.0),
+    b: util::clamp(&(color.b / SAMPLES_PER_PIXEL as f32), 0.0, 1.0)
+  };
+
+  // Gamma correction of 2.0
+  return Color {
+    r: avg_color.r.sqrt(),
+    g: avg_color.g.sqrt(),
+    b: avg_color.b.sqrt(),
+  };
 }
 
 fn ray_color(ray: &Ray, world: &HittableList, depth: u32) -> Color {
@@ -118,7 +133,7 @@ fn ray_color(ray: &Ray, world: &HittableList, depth: u32) -> Color {
     return Color { r: 0.0, g: 0.0, b: 0.0 };
   }
 
-  match world.hit(ray, &0.0, &f32::INFINITY) {
+  match world.hit(ray, &0.001, &f32::INFINITY) {
     Some(hit) => {
       let target: Point = hit.p + hit.normal + random_in_unit_sphere();
       return ray_color(&Ray { origin: hit.p, direction: target - hit.p }, world, depth - 1) * 0.5;
