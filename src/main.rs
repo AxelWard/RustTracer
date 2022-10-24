@@ -3,7 +3,8 @@ use camera::Camera;
 use hittable::{Hittable, HittableList};
 use hittable::sphere::Sphere;
 use math::ray::Ray;
-use math::util;
+use math::util::random_in_unit_sphere;
+use math::{util, Point};
 use math::vec3::Vec3;
 use time::OffsetDateTime;
 
@@ -17,10 +18,12 @@ mod camera;
 mod hittable;
 
 const SAMPLES_PER_PIXEL: i32 = 25;
+const MAX_BOUNCES: u32 = 25;
+const GAMMA_SCALE: f32 = 2.0;
 
 fn main() {
-  let width = 1280;
-  let height = 720;
+  let width = 540;
+  let height = 360;
 
   let mut writer = init_image_file(width, height);
 
@@ -79,31 +82,26 @@ fn run(width: u16, height: u16) -> String {
     radius: 100.0,
   }));
 
-  let aa_count = (SAMPLES_PER_PIXEL as f32).sqrt().round() as i32;
-  let aa_step = 1.0 / aa_count as f32;
-
   for i in (0..height).rev() {
     for j in 0..width {
       iter += 1;
 
       let mut color = Color { r: 0.0, g: 0.0, b: 0.0 };
 
-      for x in 0..aa_count {
-        for y in 0..aa_count {
-          let u: f32 = (j as f32 + ((x + 1) as f32 * aa_step)) / (width - 1) as f32;
-          let v: f32 = (i as f32 + ((y + 1) as f32 * aa_step)) as f32 / (height - 1) as f32;
+      for _ in 0..SAMPLES_PER_PIXEL {
+          let u: f32 = (j as f32 + util::random_float()) / (width - 1) as f32;
+          let v: f32 = (i as f32 + util::random_float()) / (height - 1) as f32;
     
-          color += ray_color(&cam.get_ray(u, v), &world);
-        }
+          color += ray_color(&cam.get_ray(u, v), &world, MAX_BOUNCES);
       }
       
-      let final_color: Color = Color { 
-        r: util::clamp(&(color.r / SAMPLES_PER_PIXEL as f32), 0.0, 255.0),
-        g: util::clamp(&(color.g / SAMPLES_PER_PIXEL as f32), 0.0, 255.0),
-        b: util::clamp(&(color.b / SAMPLES_PER_PIXEL as f32), 0.0, 255.0)
-      } ;
+      let avg_color: Color = Color { 
+        r: util::clamp(&(color.r / SAMPLES_PER_PIXEL as f32), 0.0, 1.0).sqrt(),
+        g: util::clamp(&(color.g / SAMPLES_PER_PIXEL as f32), 0.0, 1.0).sqrt(),
+        b: util::clamp(&(color.b / SAMPLES_PER_PIXEL as f32), 0.0, 1.0).sqrt()
+      };
 
-      color_string += &(final_color.to_string() + "\n");
+      color_string += &((avg_color * 255.0).to_string() + "\n");
 
       let percent = iter as f32 / size as f32;
       if iter % (size / 100) == 0 {
@@ -115,15 +113,20 @@ fn run(width: u16, height: u16) -> String {
   return color_string;
 }
 
-fn ray_color(ray: &Ray, world: &HittableList) -> Color {
+fn ray_color(ray: &Ray, world: &HittableList, depth: u32) -> Color {
+  if depth == 0 {
+    return Color { r: 0.0, g: 0.0, b: 0.0 };
+  }
+
   match world.hit(ray, &0.0, &f32::INFINITY) {
     Some(hit) => {
-      return Color { r: hit.normal.x * 255.0, g: hit.normal.y * 255.0, b: hit.normal.z * 255.0 };
+      let target: Point = hit.p + hit.normal + random_in_unit_sphere();
+      return ray_color(&Ray { origin: hit.p, direction: target - hit.p }, world, depth - 1) * 0.5;
     },
     None => {
       let unit_direction = ray.direction.unit();
       let t: f32 = 0.5 * (unit_direction.y + 1.0);
-      return util::lerp(t, &Color { r: 255.0, g: 255.0, b: 255.0 }, &Color { r: 53.0, g: 188.0, b: 243.0 });
+      return util::lerp(t, &Color { r: 1.0, g: 1.0, b: 1.0 }, &Color { r: 0.207, g: 0.737, b: 0.953 });
     }
   }
 }
