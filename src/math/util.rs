@@ -2,7 +2,7 @@ use std::ops::Range;
 use rand::Rng;
 
 use crate::color::Color;
-use super::Point;
+use super::{Point, vec3::Vec3};
 
 pub fn lerp(t: f32, min: &Color, max: &Color) -> Color {
   return *min * (1.0 - t) + *max * t;
@@ -22,7 +22,7 @@ pub fn random_float_range(min: f32, max: f32) -> f32 {
   return rand::thread_rng().gen_range::<f32, Range<f32>>(Range { start: min, end: max });
 }
 
-pub fn random_in_unit_sphere() -> Point {
+pub fn random_on_unit_sphere() -> Point {
   loop {
     let p: Point = Point {
       x: random_float_range(-1.0, 1.0),
@@ -31,7 +31,16 @@ pub fn random_in_unit_sphere() -> Point {
     };
 
     if p.length() <= 1.0 {
-      return p;
+      return p.unit();
     }
+  }
+}
+
+pub fn random_on_hemisphere(normal: &Vec3) -> Vec3 {
+  let u = random_on_unit_sphere();
+  if normal.dot(&u) > 0.0 {
+    return u;
+  } else {
+    return -u;
   }
 }

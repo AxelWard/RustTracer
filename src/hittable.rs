@@ -1,4 +1,4 @@
-use crate::math::{Point, vec3::Vec3, ray::Ray};
+use crate::{math::{Point, vec3::Vec3, ray::Ray}, material::Material};
 
 pub mod sphere;
 
@@ -6,12 +6,12 @@ pub trait Hittable {
   fn hit(&self, ray: &Ray, t_min: &f32, t_max: &f32) -> Option<HitRecord>;
 }
 
-#[derive(Copy, Clone)]
 pub struct HitRecord {
   pub p: Point,
   pub normal: Vec3,
   pub t: f32,
-  pub front_face: bool
+  pub front_face: bool,
+  pub material: Box<dyn Material>
 }
 
 impl HitRecord {

@@ -1,14 +1,13 @@
-use std::sync::mpsc::{self, Sender, Receiver};
 use std::time::SystemTime;
+use time::OffsetDateTime;
+
 use camera::Camera;
 use hittable::{Hittable, HittableList};
 use hittable::sphere::Sphere;
 use math::ray::Ray;
-use math::util::random_in_unit_sphere;
+use math::util::random_on_hemisphere;
 use math::{util, Point};
 use math::vec3::Vec3;
-use time::OffsetDateTime;
-
 use color::Color;
 use file_writer::FileWriter;
 
@@ -17,6 +16,7 @@ mod color;
 mod math;
 mod camera;
 mod hittable;
+mod material;
 
 const SAMPLES_PER_PIXEL: i32 = 50;
 const MAX_BOUNCES: u32 = 25;
@@ -135,8 +135,7 @@ fn ray_color(ray: &Ray, world: &HittableList, depth: u32) -> Color {
 
   match world.hit(ray, &0.001, &f32::INFINITY) {
     Some(hit) => {
-      let target: Point = hit.p + hit.normal + random_in_unit_sphere();
-      return ray_color(&Ray { origin: hit.p, direction: target - hit.p }, world, depth - 1) * 0.5;
+      
     },
     None => {
       let unit_direction = ray.direction.unit();

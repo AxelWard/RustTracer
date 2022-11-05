@@ -1,9 +1,10 @@
 use super::{Hittable, HitRecord};
-use crate::math::{Point, vec3::Vec3, ray::Ray};
+use crate::{math::{Point, vec3::Vec3, ray::Ray}, material::Material};
 
 pub struct Sphere {
   pub center: Point,
-  pub radius: f32
+  pub radius: f32,
+  pub material: Box<dyn Material>
 }
 
 impl Hittable for Sphere {
@@ -35,7 +36,8 @@ impl Hittable for Sphere {
       p: hit_point,
       normal: ((hit_point - self.center) / self.radius).unit(),
       t: root,
-      front_face: true
+      front_face: true,
+      material: self.material
     };
     hit_record.set_front_face(ray, &((hit_point - self.center) / self.radius).unit());
 
