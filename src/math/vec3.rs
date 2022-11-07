@@ -31,6 +31,11 @@ impl Vec3 {
       z: self.x * v2.y - self.y * v2.x
     }
   }
+
+  pub fn near_zero(&self) -> bool {
+    let s = 1e-8 as f32;
+    return (self.x.abs() < s) && (self.y.abs() < s) && (self.z.abs() < s);
+  }
 }
 
 impl ops::Mul<f32> for Vec3 {

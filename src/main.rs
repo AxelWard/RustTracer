@@ -1,13 +1,12 @@
+use std::rc::Rc;
 use std::time::SystemTime;
+use material::lambertian::Lambertian;
 use time::OffsetDateTime;
 
 use camera::Camera;
 use hittable::{Hittable, HittableList};
 use hittable::sphere::Sphere;
-use math::ray::Ray;
-use math::util::random_on_hemisphere;
-use math::{util, Point};
-use math::vec3::Vec3;
+use math::{util, vec3::Vec3, ray::Ray};
 use color::Color;
 use file_writer::FileWriter;
 
@@ -80,10 +79,12 @@ fn run(width: u16, height: u16) -> Vec<Color> {
   world.add(Box::new(Sphere {
     center: Vec3 { x: 0.0, y: 0.0, z: -1.0 },
     radius: 0.5,
+    material: Rc::new(Lambertian { albedo: Color { r: 0.5, g: 0.5, b: 0.5 } })
   }));
   world.add(Box::new(Sphere {
     center: Vec3 { x: 0.0, y: -100.5, z: -1.0 },
     radius: 100.0,
+    material: Rc::new(Lambertian { albedo: Color { r: 0.074, g: 0.521, b: 0.062 } })
   }));
 
   let mut output: Vec<Color> = Vec::with_capacity(width as usize * height as usize);
@@ -135,7 +136,14 @@ fn ray_color(ray: &Ray, world: &HittableList, depth: u32) -> Color {
 
   match world.hit(ray, &0.001, &f32::INFINITY) {
     Some(hit) => {
-      
+      match hit.material.scatter(ray, &hit) {
+        Some((scattered, attenuation)) => {
+          return attenuation * ray_color(&scattered, &world, depth + 1);
+        },
+        None => {
+          return Color { r: 0.0, g: 0.0, b: 0.0 };
+        }
+      }
     },
     None => {
       let unit_direction = ray.direction.unit();

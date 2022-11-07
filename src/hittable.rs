@@ -1,3 +1,5 @@
+use std::{rc::Rc};
+
 use crate::{math::{Point, vec3::Vec3, ray::Ray}, material::Material};
 
 pub mod sphere;
@@ -6,12 +8,13 @@ pub trait Hittable {
   fn hit(&self, ray: &Ray, t_min: &f32, t_max: &f32) -> Option<HitRecord>;
 }
 
+#[derive(Clone)]
 pub struct HitRecord {
   pub p: Point,
   pub normal: Vec3,
   pub t: f32,
   pub front_face: bool,
-  pub material: Box<dyn Material>
+  pub material: Rc<dyn Material>
 }
 
 impl HitRecord {
@@ -48,7 +51,7 @@ impl Hittable for HittableList {
     let mut closest_hit: Option<HitRecord> = None;
 
     for object in &self.objects {
-      match closest_hit {
+      match closest_hit.clone() {
         Some(c_hit) => {
           match object.hit(ray, t_min, t_max) {
             Some(o_hit) => {
